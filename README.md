@@ -22,5 +22,4 @@ ssmTerminal requires index.html and client.min.js, both located under /src. It c
 # Compiling from source
 If changes are made to the source code, then 'npn run prod_build' will recompile from source. 
 
-![alt text](https://code.amazon.com/packages/AWSProserve_ssmTerminal/blobs/master/--/screenshots/ssmTerminal_trackDirectory.png "Screenshot")
 
