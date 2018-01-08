@@ -1,3 +1,2 @@
 node_modules/*
 !node_modules/react-web-terminal/
-src/client.min.js
