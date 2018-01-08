@@ -1,0 +1,32 @@
+/*.react-web-terminal {*/
+/*    background-color: white;*/
+/*    color: black;*/
+/*}*/
+
+
+
+@keyframes cursor-blink {
+  50% {
+    background-color: #000; } }
+
+.react-web-terminal {
+  height: calc(100% - (8 * 16px));
+  /*width: calc(100% - (2 * 16px));*/
+  padding: 16px;
+  background-color: #fff;
+  color: #000;
+  font-family: monospace;
+  outline:none;
+  /*overflow: scroll;*/
+  }
+  .react-web-terminal pre {
+    font-family: monospace;
+    margin: 0; }
+  .react-web-terminal .react-web-terminal-input {
+    white-space: nowrap; }
+  .react-web-terminal:focus .react-web-terminal-input .react-web-terminal-input-buffer .react-web-terminal-cursor {
+    animation: cursor-blink 1.5s linear infinite; }
+    
+  
+  
+
