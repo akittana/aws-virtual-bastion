@@ -21,6 +21,3 @@ ssmTerminal requires index.html and client.min.js, both located under /src. It c
 
 # Compiling from source
 If changes are made to the source code, then 'npn run prod_build' will recompile from source. 
-
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
-
