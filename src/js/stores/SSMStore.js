@@ -183,12 +183,16 @@ class SSMStore extends EventEmitter {
                     instanceTags: instance.instanceTags,
                     instanceDetails: instance.instanceDetails,
                     ssmEnabled: false,
+                    platformType: "",
                 };
             });
             
-            awsSSM.ssmDescribeInstanceInformation(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], region, (ssmEnabledInstances) => {
-            ssmEnabledInstances.map((instance) => {
-                this.terminals[this.activeTerminalId].instancesList[instance.InstanceId].ssmEnabled = true;
+            awsSSM.ssmDescribeInstanceInformation(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], region, 
+            (ssmEnabledInstances) => {
+                
+                ssmEnabledInstances.map((instance) => {
+                    this.terminals[this.activeTerminalId].instancesList[instance.InstanceId].ssmEnabled = true;
+                    this.terminals[this.activeTerminalId].instancesList[instance.InstanceId].platformType = instance.PlatformType;
             });
             
             this.emit("instances_changed");
@@ -255,11 +259,10 @@ class SSMStore extends EventEmitter {
                   clearInterval(intervalLoop);
                   const instanceId = data.InstanceId;
                   
-                  
                   //split output from Current Working Directory string (always at the end)
-                  const terminalCWD = data.StandardOutputContent.split("terminalCWDTrackText")[1];
+                  const terminalCWD = data.StandardOutputContent.split("terminalCWDTrackText")[1].replace(/\n/g,'').replace(/\s/g,''); // replace all occurences of newline
                   const commandOutput = data.StandardOutputContent.split("terminalCWDTrackText")[0];
-                  
+                  const platformType = this.terminals[terminalId].instancesList[instanceId]['platformType'];
     
                   // update selected instance information with current working directory
                   if (terminalCWD) this.terminals[terminalId].selectedInstances[instanceId]["currentWorkingDirectory"] = terminalCWD;
@@ -271,6 +274,7 @@ class SSMStore extends EventEmitter {
                   else {
                   this.terminals[terminalId].receivedTerminalOutput.push({
                        instanceId: instanceId,
+                       platformType: platformType,
                        commandOutput: commandOutput
                   }); 
                   this.setCmdSuccessIcon(terminalId,instanceId);
@@ -298,7 +302,8 @@ class SSMStore extends EventEmitter {
         instances.map( (instanceId) => {
             
             const instanceCWD = this.terminals[activeTerminalId].selectedInstances[instanceId]['currentWorkingDirectory'];
-            awsSSM.ssmSendCommand(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], command, [instanceCWD], [instanceId] ,region, this.settings['ssmTimeout'],
+            const platformType = this.terminals[this.activeTerminalId].instancesList[instanceId]['platformType'];
+            awsSSM.ssmSendCommand(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], command, [instanceCWD], [instanceId], platformType, region, this.settings['ssmTimeout'],
                     (commandId, instanceIds) => {
                         
                         this.ssmWaitForCommandComplete(activeTerminalId, commandId,instanceIds, (overrideSuccessCallback == null) ? null : overrideSuccessCallback);

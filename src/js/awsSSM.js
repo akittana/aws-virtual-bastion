@@ -64,9 +64,9 @@ export function listRegions(callback){
     });
 }
 
-export function ssmSendCommand(accessKeyId, secretAccessKey, command,workingDirectory,instanceIds,region, cmdTimeOut, successCallback, errCallback){
+export function ssmSendCommand(accessKeyId, secretAccessKey, command,workingDirectory,instanceId, platformType, region, cmdTimeOut, successCallback, errCallback){
     
-    
+   
     var commandId = '';
     // var instanceIds = [];
     
@@ -77,21 +77,22 @@ export function ssmSendCommand(accessKeyId, secretAccessKey, command,workingDire
     });
         
     const params = {
-        DocumentName: "AWS-RunShellScript",
-        InstanceIds: instanceIds,
+        // DocumentName: "AWS-RunShellScript",
+        DocumentName: (platformType == 'Linux' ? "AWS-RunShellScript": "AWS-RunPowerShellScript"),
+        InstanceIds: instanceId,
         Parameters: {
-            'commands': [command, "echo terminalCWDTrackText`pwd`terminalCWDTrackText"],
+            'commands': [command, (platformType == 'Linux' ? "echo terminalCWDTrackText`pwd`terminalCWDTrackText": "echo terminalCWDTrackText;pwd | Write-Host;echo terminalCWDTrackText")],
             'workingDirectory': workingDirectory
         },
         TimeoutSeconds: cmdTimeOut
     };
     
     ssm.sendCommand(params, (err,data) => {
-        if (err) errCallback(err.stack, instanceIds); // an error occurred
+        if (err) errCallback(err.stack, instanceId); // an error occurred
         else {
             commandId = data.Command.CommandId;
-            instanceIds = data.Command.InstanceIds;
-            successCallback(commandId,instanceIds);
+            instanceId = data.Command.InstanceIds;
+            successCallback(commandId,instanceId);
         }
         
     });

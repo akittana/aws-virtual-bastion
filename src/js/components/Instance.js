@@ -1,7 +1,7 @@
 import React from "react";
 import * as SSMActions from "../actions/SSMActions";
 
-import { Checkbox, Icon, Popup, List } from "semantic-ui-react";
+import { Checkbox, Icon, Popup, List, Label } from "semantic-ui-react";
 
 function instanceSearchMatch(searchValue, string){
     if (searchValue == "") return true;
@@ -36,17 +36,24 @@ export default class Instance extends React.Component {
     let isVisible = false;
     
     const isChecked = this.props.selected;
-    const { instanceId, instanceDetails, viewOptionsValue, instanceSearchValue, ssmEnabled } = this.props;
+    const { instanceId, instanceDetails, viewOptionsValue, instanceSearchValue, ssmEnabled, platformType } = this.props;
     
     let icon = null;
     if (this.props.iconInfo) icon= <Icon loading={this.props.iconInfo.loading} name={this.props.iconInfo.icon} color={this.props.iconInfo.color} />;
+    
+    let labelIcon;
+    if (platformType != "") labelIcon = <Icon name={(platformType == 'Linux') ? 'linux' : 'windows'} />;
+    else labelIcon = null;
+    
+    const label = <label>{(viewOptionsValue === 'byInstanceName') ? instanceDetails.Name + "\t" : instanceId + "\t"}{labelIcon}</label>;
     
     const checkbox = <Checkbox
           disabled={!ssmEnabled}
           id={instanceId} 
           checked={isChecked} 
           onChange={this.toggleSelect.bind(this,instanceId)} 
-          label={ (viewOptionsValue === 'byInstanceName') ? instanceDetails.Name + "\t" : instanceId + "\t"} 
+          // label={ (viewOptionsValue === 'byInstanceName') ? instanceDetails.Name + "\t" : instanceId + "\t"} 
+          label={label}
           style={checkboxStyle} fitted />;
     
     var detailsList = [];

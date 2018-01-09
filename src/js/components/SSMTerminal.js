@@ -36,8 +36,9 @@ export default class SSMTerminal extends React.Component {
             const instanceId = data.instanceId;
             const instanceCWD = SSMStore.getInstanceCWD(terminalId, data.instanceId);
             const instanceHostname = SSMStore.getInstanceHostname(terminalId, data.instanceId);
+            const platformType = data.platformType;
             
-            this.terminalComponent.output( ((this.terminalShowHostname) ? instanceHostname : instanceId) + ":" + instanceCWD + "$ " + data.commandOutput);
+            this.terminalComponent.output( ((this.terminalShowHostname) ? instanceHostname : instanceId) + ((platformType == 'Linux')? ":": "|") + instanceCWD + ((platformType == 'Linux')? "$ ": "> ") + data.commandOutput);
             data = SSMStore.getReceivedTerminalOutput(terminalId);
         }
     }
