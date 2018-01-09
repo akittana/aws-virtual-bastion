@@ -6,6 +6,7 @@ Key Features:
  2. Send commands to multiple instances at once. 
  3. Have multiple terminal windows open at the same time. 
  4. Filter instances based on multiple attributes such as tags, instance ids, and names.
+ 5. Support for Powershell (Windows Instances) and bash (Linux Instances)
 
 # Requirements
 
