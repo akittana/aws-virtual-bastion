@@ -15,13 +15,14 @@ var config = {
       { 
         test: /\.(js)$/, 
         loader: 'babel-loader', 
-        exclude: /(node_modules\/aws-sdk)/,
+        exclude: /(node_modules\/aws-sdk|node_modules\/amazon-cognito-identity-js)/,
         query: {
           presets: ['react', 'es2015', 'stage-0'],
           plugins: ['react-html-attrs', 'transform-class-properties', 'transform-decorators-legacy']
         }
       },
-      { test: /\.css$/, use: [ 'style-loader', 'css-loader' ]}
+      { test: /\.css$/, use: [ 'style-loader', 'css-loader' ]},
+      {test:/\.json$/,loader:'json-loader'}
     ]
   },
   plugins: [/*new BundleAnalyzerPlugin({analyzerHost:"0.0.0.0"}),*/

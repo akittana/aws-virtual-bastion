@@ -10,7 +10,7 @@ import { Tab, Message } from 'semantic-ui-react';
 export default class Terminals extends React.Component {
     constructor(){
         super();
-        this.terminalStyle = {'overflowY':'scroll','height':'85vh'};
+        this.terminalStyle = {'overflowY':'auto','height':'85vh'};
         this.handleTabChange = this.handleTabChange.bind(this);
 
         

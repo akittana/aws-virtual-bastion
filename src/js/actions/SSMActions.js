@@ -65,3 +65,12 @@ export function updateSettings(newSettings){
         newSettings
     });
 }
+
+export function displayErrorMessage(errorHeader, errorMessage, errorDetailed){
+    dispatcher.dispatch({
+        type: "ERROR_MESSAGE",
+        errorHeader,
+        errorMessage,
+        errorDetailed
+    });
+}

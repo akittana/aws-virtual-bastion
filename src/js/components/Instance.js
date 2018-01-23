@@ -16,9 +16,7 @@ export default class Instance extends React.Component {
     super();
     
   }
-  
 
-  
   toggleSelect(id){
     SSMActions.toggleInstanceSelected(id);
   }

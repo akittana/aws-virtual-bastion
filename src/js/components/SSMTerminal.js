@@ -10,10 +10,20 @@ export default class SSMTerminal extends React.Component {
     
     constructor(){
         super();
+        
+        this.state = {
+          commandLog: [],
+          currentLineInLog: 0
+        };
+        
         this.terminalShowHostname = SSMStore.getSettings()['terminalShowHostname'];
         this.processOutputReceived = this.processOutputReceived.bind(this);
         this.setFocus = this.setFocus.bind(this);
         this.commandHandler = this.commandHandler.bind(this);
+        this.handleArrowUp = this.handleArrowUp.bind(this);
+        this.handleArrowDown = this.handleArrowDown.bind(this);
+        this.resetInputBuffer = this.resetInputBuffer.bind(this);
+        this.insertInputText = this.insertInputText.bind(this);
     }
     
     componentWillMount(){
@@ -24,6 +34,14 @@ export default class SSMTerminal extends React.Component {
     
     componentWillUnmount(){
         SSMStore.removeListener("terminal_output_received", this.processOutputReceived);
+    }
+    
+    resetInputBuffer(){
+        this.terminalComponent.inputComp.buffer.resetInputBuffer();
+    }
+    
+    insertInputText(text){
+        this.terminalComponent.inputComp.buffer.insertText(text);
     }
     
     processOutputReceived(){
@@ -44,20 +62,60 @@ export default class SSMTerminal extends React.Component {
     }
     
     commandHandler(component) {
+        let currentCommandLog = this.state.commandLog;
         const terminalId = this.props.terminalId;
         SSMActions.terminalSendCommand(terminalId, component.input(), 'y');
+        currentCommandLog.push(component.input());
+        this.resetInputBuffer();
         
+        this.setState({
+            commandLog:currentCommandLog,
+            currentLineInLog: (currentCommandLog.length - 1)
+        });
     }
     
     setFocus(){
         this.terminalComponent.focus();
+    }
+    
+    handleArrowUp(){
+        let currentLineInLog = this.state.currentLineInLog;
+        if (currentLineInLog == this.state.commandLog.length) currentLineInLog--;
+        
+        const lastCommandInHistoryBuffer = this.state.commandLog[currentLineInLog];
+        this.resetInputBuffer();
+        this.insertInputText(lastCommandInHistoryBuffer);
+        if (currentLineInLog > 0) this.setState({currentLineInLog: (currentLineInLog - 1)});
+    }
+    
+    handleArrowDown(){
+        let currentLineInLog = this.state.currentLineInLog;
+        if (currentLineInLog == 0) currentLineInLog++;
+        
+        if (currentLineInLog == (this.state.commandLog.length)) {
+            this.resetInputBuffer();
+            this.insertInputText("");
+            return;
+        }
+        
+        const lastCommandInHistoryBuffer = this.state.commandLog[currentLineInLog];
+        this.resetInputBuffer();
+        this.insertInputText(lastCommandInHistoryBuffer);
+        if (currentLineInLog < (this.state.commandLog.length)) this.setState({currentLineInLog: (currentLineInLog + 1)});
+        
     }
         
     render(){
         
         return(
            <Grid.Row stretched>  
-             <Terminal commandHandler={this.commandHandler} prompt='~> ' ref={(component)=>{this.terminalComponent =component;}} />
+             <Terminal 
+                commandHandler={this.commandHandler} prompt='$ ' 
+                ref={(component)=>{this.terminalComponent =component;}} 
+                keyStrokeMap={{
+                    'ArrowUp': this.handleArrowUp,
+                    'ArrowDown': this.handleArrowDown
+                }}/>
            </Grid.Row>    
         );
     }

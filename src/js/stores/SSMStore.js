@@ -19,13 +19,27 @@ class SSMStore extends EventEmitter {
         this.authDetails = {
             mode: "",
             accessKeyId: "", 
-            secretAccessKey: "" 
+            secretAccessKey: "",
+            mfaEnabled: false,
+            mfaSerial: "",
+            mfaTokenCode: "",
+            credentialsObject: null,
+            cognitoUsername: "", 
+            cognitoPassword:"", 
+            cognitoUserPoolId:"us-east-1_7E9fI4QPV", 
+            cognitoIdentityPoolId:"us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d", 
+            cognitoAppClientId:"2ismdvu6g5ee0e4lgf9np00u23", 
+            cognitoRegion:"us-east-1"
         };
         this.isAuthenticated = false;
         this.settings = {
             ssmTimeout: 60,
-            terminalShowHostname: true
+            terminalShowHostname: true,
+            logToS3: false,
+            logBucketName: "",
+            logS3KeyPrefix: ""
         };
+        this.errorMessages = [];
         
         this.getSettings = this.getSettings.bind(this);
     }
@@ -40,12 +54,43 @@ class SSMStore extends EventEmitter {
             
             case "SET_AUTHENTICATION_DETAILS": {
                 this.authDetails['mode'] = action.mode;
-                this.authDetails['accessKeyId'] = action.authDetails.accessKey;
-                this.authDetails['secretAccessKey'] = action.authDetails.secretAccessKey;
-                
-                awsSSM.init_ec2(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'],"us-east-1");
-                this.isAuthenticated = true;
-                this.loadRegions();
+                if (this.authDetails['mode'] == 'iamUser')
+                {
+                    this.authDetails['accessKeyId'] = action.authDetails.accessKeyId;
+                    this.authDetails['secretAccessKey'] = action.authDetails.secretAccessKey;
+                    
+                    this.isAuthenticated = true;
+                    this.loadRegions();
+                }
+                else if (this.authDetails['mode'] == 'iamUserMfa') {
+                    awsSSM.stsGetSessionToken(this.authDetails, 'us-east-1', (data) => {
+                        this.authDetails['credentialsObject'] = data.Credentials;
+                        this.isAuthenticated = true;
+                        this.loadRegions();
+                    });
+                    
+                }
+                else if (this.authDetails['mode'] == 'cognito'){
+                    const { cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion } = action.authDetails;
+                    this.authDetails.mode = 'cognito';
+                    awsSSM.cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion, 
+                    (credentialsObject) => {
+                        
+                        if (credentialsObject){
+                            this.authDetails.credentialsObject = credentialsObject; 
+                            this.authDetails.cognitoUsername = cognitoUsername;
+                            this.authDetails.cognitoPassword = cognitoPassword;
+                            this.authDetails.cognitoUserPoolId = cognitoUserPoolId;
+                            this.authDetails.cognitoIdentityPoolId = cognitoIdentityPoolId;
+                            this.authDetails.cognitoAppClientId = cognitoAppClientId;
+                            this.authDetails.cognitoRegion = cognitoRegion;
+                            
+                            
+                            this.isAuthenticated = true;
+                            this.loadRegions();
+                        }
+                    });
+                }
                 break;
             }
         
@@ -65,7 +110,7 @@ class SSMStore extends EventEmitter {
             }
             
             case "LOAD_REGIONS": {
-                awsSSM.init_ec2(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'],"us-east-1");
+                // awsSSM.init_ec2(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'],"us-east-1");
                 this.loadRegions();
                 break;
             }
@@ -108,12 +153,31 @@ class SSMStore extends EventEmitter {
                 break;
             }
             
+            case "ERROR_MESSAGE": {
+                this.displayErrorMessage(action.errorHeader, action.errorMessage, action.errorDetailed);
+                
+                break;
+            }
+            
             
         }
     }
     
+    displayErrorMessage(errorHeader, errorMessage, errorDetailed ){
+        this.errorMessages.push({
+                    errorHeader,
+                    errorMessage,
+                    errorDetailed
+                });
+        this.emit("error_message_received");
+    }
+    
     isAuthenticated(){
         return this.isAuthenticated;
+    }
+    
+    getAuthDetails(){
+        return this.authDetails;
     }
     
     setCmdLoadingIcon(terminalId, instanceId){
@@ -139,7 +203,7 @@ class SSMStore extends EventEmitter {
     
     loadRegions() {
         this.regions = [];
-        awsSSM.listRegions( (regions) => {
+        awsSSM.listRegions( this.authDetails,(regions) => {
             regions.map((region) => {this.regions.push(region);});
             this.emit("regions_updated");
         });
@@ -167,6 +231,10 @@ class SSMStore extends EventEmitter {
         return this.terminals[terminalId].receivedTerminalOutput.pop();
     }
     
+    getErrorMessages(){
+        return this.errorMessages.pop();
+    }
+    
     selectRegion(region){
         this.loadInstances(region);
         this.terminals[this.activeTerminalId].selectedRegion= region;
@@ -174,7 +242,7 @@ class SSMStore extends EventEmitter {
     }
     
     loadInstances(region) {
-        awsSSM.listInstances(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], region, (instances) => {
+        awsSSM.listInstances(this.authDetails, region, (instances) => {
             this.terminals[this.activeTerminalId].instancesList = {};
             instances.map((instance) => {
                 this.terminals[this.activeTerminalId].instancesList[instance.instanceId] = {
@@ -187,7 +255,7 @@ class SSMStore extends EventEmitter {
                 };
             });
             
-            awsSSM.ssmDescribeInstanceInformation(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], region, 
+            awsSSM.ssmDescribeInstanceInformation(this.authDetails, region, 
             (ssmEnabledInstances) => {
                 
                 ssmEnabledInstances.map((instance) => {
@@ -222,7 +290,7 @@ class SSMStore extends EventEmitter {
     }
     
     updateSelectedInstances(){
-        // this.terminals[this.activeTerminalId].selectedInstances = {};
+        
         Object.keys(this.terminals[this.activeTerminalId].instancesList).map((key, index) => {
            const instanceId = key;
            if (this.terminals[this.activeTerminalId].instancesList[key]["selected"]) {
@@ -254,14 +322,29 @@ class SSMStore extends EventEmitter {
     }
     
     ssmWaitForCommandComplete(terminalId, commandId, instanceIds, overrideSuccessCallback){
+        const intervalPeriod = 250; // Interval in ms
+        
+        let timeWaited = 0;
         const successCallback = (data) => {
+            timeWaited += intervalPeriod;
+            
+            const instanceId = data.InstanceId;
               if (data.StatusDetails == "Success") {
                   clearInterval(intervalLoop);
-                  const instanceId = data.InstanceId;
-                  
+
                   //split output from Current Working Directory string (always at the end)
-                  const terminalCWD = data.StandardOutputContent.split("terminalCWDTrackText")[1].replace(/\n/g,'').replace(/\s/g,''); // replace all occurences of newline
-                  const commandOutput = data.StandardOutputContent.split("terminalCWDTrackText")[0];
+                  let terminalCWD = null;
+                  let commandOutput = null;
+                  if (data.StandardOutputContent.includes("terminalCWDTrackText")) {
+                  terminalCWD = data.StandardOutputContent.split("terminalCWDTrackText")[1].replace(/\n/g,'').replace(/\s/g,''); // replace all occurences of newline and whitespace
+                  commandOutput = data.StandardOutputContent.split("terminalCWDTrackText")[0];
+                  }
+                  else {
+                      commandOutput = data.StandardOutputContent;
+                      this.displayErrorMessage("Error in changing working directory",{code:"Error:",message:"Output too long"},null);
+
+                  }
+                  
                   const platformType = this.terminals[terminalId].instancesList[instanceId]['platformType'];
     
                   // update selected instance information with current working directory
@@ -282,19 +365,31 @@ class SSMStore extends EventEmitter {
                   this.emit("terminal_output_received");
                   }
               }
+              else {
+                  if (data.StatusDetails != "InProgress"){
+                      
+                      this.displayErrorMessage("Error in receiving command output",{code:"Command Status",message:data.StatusDetails},null);
+                      clearInterval(intervalLoop);
+                      this.setCmdErrorIcon(this.activeTerminalId,instanceId);
+                  }
+                  
+                  if (timeWaited > (this.settings.ssmTimeout * 1000)) {
+                      this.displayErrorMessage("Error in receiving command output",{code:"Command Status",message:"Timed out"},null);
+                      clearInterval(intervalLoop);
+                      this.setCmdErrorIcon(this.activeTerminalId,instanceId);
+                  }
+              }
         };
         
         const errCallback = (err, instanceId) => {
-                console.log("error",err);
+                this.displayErrorMessage('Error getting command output',err, err.stack);
                 this.setCmdErrorIcon(this.activeTerminalId, instanceId);
             };
         
-        
         var intervalLoop = setInterval(
-            awsSSM.ssmGetCommandInvocation.bind(this,this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], commandId, instanceIds, this.terminals[this.activeTerminalId].selectedRegion,
+            awsSSM.ssmGetCommandInvocation.bind(this,this.authDetails, commandId, instanceIds, this.terminals[this.activeTerminalId].selectedRegion,
            successCallback, errCallback )
-           ,250);
-
+           ,intervalPeriod);
     }
     
     ssmSendCommand(instances, region, activeTerminalId, command, overrideSuccessCallback ) {
@@ -303,7 +398,7 @@ class SSMStore extends EventEmitter {
             
             const instanceCWD = this.terminals[activeTerminalId].selectedInstances[instanceId]['currentWorkingDirectory'];
             const platformType = this.terminals[this.activeTerminalId].instancesList[instanceId]['platformType'];
-            awsSSM.ssmSendCommand(this.authDetails['accessKeyId'], this.authDetails['secretAccessKey'], command, [instanceCWD], [instanceId], platformType, region, this.settings['ssmTimeout'],
+            awsSSM.ssmSendCommand(this.authDetails, command, [instanceCWD], [instanceId], platformType, region, this.settings,
                     (commandId, instanceIds) => {
                         
                         this.ssmWaitForCommandComplete(activeTerminalId, commandId,instanceIds, (overrideSuccessCallback == null) ? null : overrideSuccessCallback);
@@ -311,7 +406,7 @@ class SSMStore extends EventEmitter {
                         instanceIds.map((instanceId) => {
                             this.setCmdErrorIcon(this.activeTerminalId, instanceId);    
                         });
-                        console.log(err);
+                        this.displayErrorMessage('Error sending command',err, err.stack);
                         
                     });
                     
