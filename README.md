@@ -1,6 +1,9 @@
 # Overview
 A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands on the instances (bash or powershell).
 
+![Run commands on multiple instances](/screenshots/multis-elect.png) ![Run Powershell commands](/screenshots/powershell.png)
+![Keep track of directory](/screenshots/dir-state.png)
+
 Key Features:
  1. Secure interactive command-line shell in the browser without exposing any ports on the instance.
  2. Keeps track of current directory which enables moving around the filesystem similar to a traditional shell session.
@@ -8,7 +11,7 @@ Key Features:
  4. Automatically log all commands and their output in S3. 
 
 # How it works
-ssmTerminal relies on the AWS Systems Manager (SSM) service. To use the service, instances need to have an agent installed (installed by default on the latest Amazon Linux and Windows EC2 instances). The SSM service can send commands (linux shell or windows powershell) to instances through the agents. Finally, EC2 instances require access to the SSM service (outbound access from the instances).
+Virtual bastion (ssmTerminal) relies on the AWS Systems Manager (SSM) service. To use the service, instances need to have an agent installed (installed by default on the latest Amazon Linux and Windows EC2 instances). The SSM service can send commands (linux shell or windows powershell) to instances through the agents. Finally, EC2 instances require access to the SSM service (outbound access from the instances).
 
 ssmTerminal communciates with the SSM service using the AWS API. Commands entered into ssmTerminal trigger the sendCommand API call, and once the commands are executed on the instance, the output is retrieved using the getCommandInvocation API call. The output is formatted and displayed by ssmTerminal.
 
