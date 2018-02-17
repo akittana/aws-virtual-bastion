@@ -26,10 +26,10 @@ class SSMStore extends EventEmitter {
             credentialsObject: null,
             cognitoUsername: "", 
             cognitoPassword:"", 
-            cognitoUserPoolId:"us-east-1_7E9fI4QPV", 
-            cognitoIdentityPoolId:"us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d", 
-            cognitoAppClientId:"2ismdvu6g5ee0e4lgf9np00u23", 
-            cognitoRegion:"us-east-1"
+            cognitoUserPoolId: "", 
+            cognitoIdentityPoolId:"", 
+            cognitoAppClientId:"", 
+            cognitoRegion:"", 
         };
         this.isAuthenticated = false;
         this.settings = {

@@ -6,7 +6,6 @@ import { AuthenticationDetails, CognitoUserPool, CognitoUser } from 'amazon-cogn
 
 import * as SSMActions from './actions/SSMActions';
 
-
 export function listInstances(authDetails, region,callback){
     
     let ec2 = null;
@@ -235,14 +234,14 @@ export function ssmDescribeInstanceInformation(authDetails, region, successCallb
 export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion, successCallback){
     
     var authenticationData = {
-        Username : cognitoUsername, //'user1',
-        Password : cognitoPassword //'P@55word2',
+        Username : cognitoUsername,
+        Password : cognitoPassword 
     };
     var authenticationDetails = new AuthenticationDetails(authenticationData);
     
     var poolData = {
-        UserPoolId : cognitoUserPoolId, //'us-east-1_7E9fI4QPV', // Your user pool id here
-        ClientId : cognitoAppClientId //'2ismdvu6g5ee0e4lgf9np00u23' // Your client id here
+        UserPoolId : cognitoUserPoolId,  // Your user pool id here
+        ClientId : cognitoAppClientId // Your client id here
     };
     var userPool = new CognitoUserPool(poolData);
     
@@ -259,7 +258,7 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
             var loginsKey = {};
             loginsKey[cognitoEndpoint] = result.getIdToken().getJwtToken();
             aws_config.credentials = new CognitoIdentityCredentials({
-                IdentityPoolId : cognitoIdentityPoolId, //'us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d', // your identity pool id here
+                IdentityPoolId : cognitoIdentityPoolId,  // your identity pool id here
                 Logins : loginsKey
             },{region:cognitoRegion});
             

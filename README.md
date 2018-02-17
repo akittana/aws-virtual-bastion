@@ -1,5 +1,5 @@
 # Overview
-ssmTerminal is a javascript client that provides an interactive terminal to EC2 instances using the AWS Systems Manager (SSM) API. ssmTerminal can be used as a virtual bastion host to provide shell access (bash or powershell for linux and windows respectively) to EC2 instances without exposing SSH or listening on any ports on the instances. 
+A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands on the instances (bash or powershell).
 
 Key Features:
  1. Secure interactive command-line shell in the browser without exposing any ports on the instance.
