@@ -1,5 +1,5 @@
 # Overview
-A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands on the instances (bash or powershell).
+A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands (bash or powershell).
 
 **Run commands on multiple instances at once:**
 
@@ -29,8 +29,6 @@ In addition, ssmTerminal appends a 'pwd' command on each requested execution. Th
 ssmTerminal supports two authentication options:
  - IAM user (Access Key and Secret Access Key). MFA (Multi-Factor Auth) token can be provided for additional security.
  - Cognito user pools with Federated Identity.
-
-Note: credentials are not stored on disk or anywhere else. 
 
 # Configuration/Requirements
 
