@@ -22,12 +22,12 @@ A web based terminal for EC2 instances that does not require SSH or any other in
 # How it works
 Virtual bastion (ssmTerminal) relies on the AWS Systems Manager (SSM) service. To use the service, instances need to have an agent installed (installed by default on the latest Amazon Linux and Windows EC2 instances). The SSM service can send commands (linux shell or windows powershell) to instances through the agents. Finally, EC2 instances require access to the SSM service (outbound access from the instances).
 
-ssmTerminal communciates with the SSM service using the AWS API. Commands entered into ssmTerminal trigger the sendCommand API call, and once the commands are executed on the instance, the output is retrieved using the getCommandInvocation API call. The output is formatted and displayed by ssmTerminal.
+ssmTerminal communciates with the SSM service using the AWS API. Commands entered into the web terminal trigger the sendCommand API call, and once the commands are executed on the instance, the output is retrieved using the getCommandInvocation API call. The output is formatted and displayed by ssmTerminal.
 
-In addition, ssmTerminal appends a 'pwd' command on each requested execution. This is used to keep track of the current directory as the user moves around the filesystem.
+In addition, with each command sent, a 'pwd' command is appended on each requested execution. This is used to keep track of the current directory as the user moves around the filesystem.
 
 # Authentication
-ssmTerminal supports two authentication options:
+Two authentication options are supported:
  - IAM user (Access Key and Secret Access Key). MFA (Multi-Factor Auth) token can be provided for additional security.
  - Cognito user pools with Federated Identity.
 
@@ -51,7 +51,7 @@ More details can be found at:
 https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-access.html
 
 # To use
-ssmTerminal requires index.html and client.min.js, both located under /src. It can be run locally or hosted on a webserver or S3 bucket by opening index.html in a browser.
+Download index.html and client.min.js, both located under /src. It can be run locally or hosted on a webserver (or S3 bucket).
 
 # Compiling from source
 If changes are made to the source code, then 'npn run prod_build' will recompile from source. 
