@@ -12,7 +12,8 @@ A web based terminal for EC2 instances that does not require SSH or any other in
 **Keeps track of current directory:**
 ![Keep track of directory](/screenshots/dir-state.png)
 
-Key Features:
+# Key Features:
+
  1. Secure interactive command-line shell in the browser without exposing any ports on the instance.
  2. Keeps track of current directory which enables moving around the filesystem similar to a traditional shell session.
  3. Execute commands/scripts on multiple instances at once, as wel as having multiple terminal sessions concurrently. 
