@@ -5,7 +5,7 @@ import SSMStore from "../stores/SSMStore";
 
 import Instance from "../components/Instance";
 
-import { Dropdown, Input, Form, Message } from "semantic-ui-react";
+import { Dropdown, Input, Form, Message, Button } from "semantic-ui-react";
 
 export default class Instances extends React.Component {
   constructor(){
@@ -17,10 +17,12 @@ export default class Instances extends React.Component {
       selectedRegion: "",
       viewOptionsValue: "byInstanceName",
       instanceSearchValue: "",
+      refreshInstancesLoading: false,
     };
     
     this.handleViewOptionsChange = this.handleViewOptionsChange.bind(this);
     this.handleSearchChange = this.handleSearchChange.bind(this);
+    this.handleRefreshButton = this.handleRefreshButton.bind(this);
     
   }
   
@@ -29,6 +31,7 @@ export default class Instances extends React.Component {
         this.setState(
             {
                 instances: SSMStore.getInstances(),
+                refreshInstancesLoading:false,
             }
         );
     });
@@ -47,6 +50,10 @@ export default class Instances extends React.Component {
     
     SSMStore.on("clear_search", () => {
       this.setState({instanceSearchValue:""});
+    });
+    
+    SSMStore.on("refresh_instances_loading",() => {
+     this.setState({refreshInstancesLoading:true}); 
     });
     
     // this.loadRegions();
@@ -76,6 +83,10 @@ export default class Instances extends React.Component {
     this.setState({instanceSearchValue:value});
   }
   
+  handleRefreshButton(){
+    SSMActions.refreshInstances();
+  }
+  
   render() {
     
     
@@ -89,7 +100,7 @@ export default class Instances extends React.Component {
         
     }
     else {
-      const { instances, selectedRegion, viewOptionsValue, instanceSearchValue } = this.state;
+      const { instances, selectedRegion, viewOptionsValue, instanceSearchValue, refreshInstancesLoading } = this.state;
     const instancesList = [];
     Object.keys(instances).map(function(key, index) {
       const instanceId = key;
@@ -128,9 +139,13 @@ export default class Instances extends React.Component {
         <div>
           <h1> Select Instances </h1>
           <Dropdown search placeholder='Choose region...' 
-          options={regionsList} onChange={this.selectRegion} value={selectedRegion}/>
+          options={regionsList} onChange={this.selectRegion} value={selectedRegion}/> 
+          <Button size='small' loading={refreshInstancesLoading} icon='refresh' style={{'position':'absolute','right':'0','backgroundColor':'Transparent'}} onClick={this.handleRefreshButton} />
           <hr></hr>
-          {instancesList.length > 0 ? <Input size='mini' icon='search' fluid value={this.state.instanceSearchValue} placeholder='Search instances by name, details, tags, ...' onChange={this.handleSearchChange} />: null }
+          {instancesList.length > 0 
+            ? <Input size='mini' icon='search' fluid value={this.state.instanceSearchValue} placeholder='Search instances by name, details, tags, ...' onChange={this.handleSearchChange} />
+            : null 
+          }
           <br />
           {instancesList.length > 0 ? instancesList: "No instances in selected region"}
           <br />

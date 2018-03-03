@@ -115,6 +115,15 @@ class SSMStore extends EventEmitter {
                 break;
             }
             
+            case "REFRESH_INSTANCES": {
+                if (this.terminals[this.activeTerminalId].selectedRegion){
+                    this.emit("refresh_instances_loading");
+                    const selectedRegion = this.terminals[this.activeTerminalId].selectedRegion;
+                    this.loadInstances(selectedRegion);
+                }
+                break;
+            }
+            
             case "TERMINAL_SEND_COMMAND": {
                 
                 const selectedRegion = this.terminals[this.activeTerminalId].selectedRegion;
@@ -264,6 +273,7 @@ class SSMStore extends EventEmitter {
             });
             
             this.emit("instances_changed");
+            
         });
         
         });

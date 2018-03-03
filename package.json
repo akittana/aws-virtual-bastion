@@ -5,7 +5,7 @@
   "main": "webpack.config.js",
   "dependencies": {
     "amazon-cognito-identity-js": "^1.29.0",
-    "aws-sdk": "^2.172.0",
+    "aws-sdk": "^2.205.0",
     "flux": "^2.1.1",
     "react": "^15.6.2",
     "react-dom": "^15.6.2",

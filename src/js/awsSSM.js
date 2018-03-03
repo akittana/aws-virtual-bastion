@@ -6,8 +6,11 @@ import { AuthenticationDetails, CognitoUserPool, CognitoUser } from 'amazon-cogn
 
 import * as SSMActions from './actions/SSMActions';
 
+const REQUEST_MAX_RESULTS = 50;
+
+
 export function listInstances(authDetails, region,callback){
-    
+
     let ec2 = null;
     if (authDetails.mode == 'iamUser') {
          ec2 = new EC2({
@@ -30,38 +33,79 @@ export function listInstances(authDetails, region,callback){
             region
         });
     }
-
-    // if (!ec2[region]) {init_ec2(accessKeyId, secretAccessKey, region);}
-    var instances = [];
     
-    ec2.describeInstances(function(err, data) {
-      if (err) SSMActions.displayErrorMessage('Error listing Instances',err, err.stack); //console.log(err, err.stack); // an error occurred
-      else {
-          
-          data.Reservations.map((instance) => {
-              
-              // extract Name tag from list of tags
-              let instanceName = "";
-              instance.Instances[0].Tags.map((tag) => {
-                  if (tag['Key'] == 'Name') instanceName = tag['Value'];
-              });
-              
-              instances.push({
-                  instanceId: instance.Instances[0].InstanceId,
-                  instanceTags: instance.Instances[0].Tags,
-                  instanceDetails: {
-                      Name: instanceName,
-                      imageId: instance.Instances[0].ImageId,
-                      instanceType: instance.Instances[0].InstanceType,
-                      privateIpAddress: instance.Instances[0].PrivateIpAddress,
-                  }
-                  
-              });
+    var parseReturnedInstances = function(returnedInstances){
+        let instances = [];
+        returnedInstances.map((instance) => {
+          // extract Name tag from list of tags
+          let instanceName = "";
+          instance.Instances[0].Tags.map((tag) => {
+              if (tag['Key'] == 'Name') instanceName = tag['Value'];
           });
           
-          callback(instances);
-      }          
-    });
+          instances.push({
+              instanceId: instance.Instances[0].InstanceId,
+              instanceTags: instance.Instances[0].Tags,
+              instanceDetails: {
+                  Name: instanceName,
+                  imageId: instance.Instances[0].ImageId,
+                  instanceType: instance.Instances[0].InstanceType,
+                  privateIpAddress: instance.Instances[0].PrivateIpAddress,
+              }
+              
+          });
+        });
+        return instances;
+    };
+    var getNextResults = function(nextToken, instancesList){
+        const params = {MaxResults: REQUEST_MAX_RESULTS, NextToken: nextToken};
+        ec2.describeInstances(params).promise()
+        .then(
+            function(data){
+                if (data.NextToken){
+
+                    parseReturnedInstances(data.Reservations).map((instance) => {
+                        instancesList.push(instance);
+                    });
+                    getNextResults(data.NextToken, instancesList);
+                }
+                else{
+                    parseReturnedInstances(data.Reservations).map((instance) => {
+                        instancesList.push(instance);
+                    });
+                    callback(instancesList);
+                }
+                
+            }
+        )
+        .catch(
+            function(err){
+                SSMActions.displayErrorMessage('Error listing Instances',err, err.stack);
+            }
+        );
+    };
+
+    const params ={MaxResults:REQUEST_MAX_RESULTS};
+    ec2.describeInstances(params).promise()
+    .then(
+        function(data){
+          if (data.NextToken == null){
+            callback(parseReturnedInstances(data.Reservations));
+          }
+          else{
+            
+            let instancesList = parseReturnedInstances(data.Reservations);
+            getNextResults(data.NextToken,instancesList);
+          }
+      }     
+    )
+    .catch(
+        function(err){
+            SSMActions.displayErrorMessage('Error listing Instances',err, err.stack);
+        }
+    );
+    
+
     
 }
 
@@ -223,25 +267,65 @@ export function ssmDescribeInstanceInformation(authDetails, region, successCallb
         });
     }
     
-    const params = {};
+    var getNextResults = function(nextToken, instanceInformationList){
+        const params = {NextToken: nextToken, MaxResults:REQUEST_MAX_RESULTS};
+        ssm.describeInstanceInformation(params).promise()
+        .then(
+            function(data){
+                if (data.NextToken == null){
+                    data.InstanceInformationList.map((instance) => {
+                        instanceInformationList.push(instance);
+                    });
+                    successCallback(instanceInformationList);
+                }
+                else
+                {
+                    data.InstanceInformationList.map((instance) => {
+                        instanceInformationList.push(instance);
+                    });
+                    getNextResults(data.NextToken,instanceInformationList);
+                }
+            }
+        )
+        .catch(function(err){
+            SSMActions.displayErrorMessage('Error retrieving instance details',err, err.stack);
+        });
+    };
     
-    ssm.describeInstanceInformation(params, function(err, data) {
-      if (err) SSMActions.displayErrorMessage('Error retrieving instance details',err, err.stack); // console.log(err, err.stack); // an error occurred
-      else     successCallback(data.InstanceInformationList);           // successful response
+    const params = {MaxResults: REQUEST_MAX_RESULTS};
+    ssm.describeInstanceInformation(params).promise()
+    .then(
+        function(data){
+            if (data.NextToken == null){
+                successCallback(data.InstanceInformationList);
+            }
+            else{
+                let instanceInformationList = data.InstanceInformationList;
+                data.InstanceInformationList.map((instance) => {
+                        instanceInformationList.push(instance);
+                    });
+                getNextResults(data.NextToken,instanceInformationList);
+            }
+        }
+    )
+    .catch(function(err){
+        SSMActions.displayErrorMessage('Error retrieving instance details',err, err.stack);
     });
+    
+    
 }
 
 export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion, successCallback){
     
     var authenticationData = {
-        Username : cognitoUsername,
+        Username : cognitoUsername, 
         Password : cognitoPassword 
     };
     var authenticationDetails = new AuthenticationDetails(authenticationData);
     
     var poolData = {
-        UserPoolId : cognitoUserPoolId,  // Your user pool id here
-        ClientId : cognitoAppClientId // Your client id here
+        UserPoolId : cognitoUserPoolId, //'us-east-1_7E9fI4QPV', // Your user pool id here
+        ClientId : cognitoAppClientId //'2ismdvu6g5ee0e4lgf9np00u23' // Your client id here
     };
     var userPool = new CognitoUserPool(poolData);
     
@@ -258,7 +342,7 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
             var loginsKey = {};
             loginsKey[cognitoEndpoint] = result.getIdToken().getJwtToken();
             aws_config.credentials = new CognitoIdentityCredentials({
-                IdentityPoolId : cognitoIdentityPoolId,  // your identity pool id here
+                IdentityPoolId : cognitoIdentityPoolId, //'us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d', // your identity pool id here
                 Logins : loginsKey
             },{region:cognitoRegion});
             
@@ -267,7 +351,7 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
             //refreshes credentials using AWS.CognitoIdentity.getCredentialsForIdentity()
             aws_config.credentials.refresh((error) => {
                 if (error) {
-                     SSMActions.displayErrorMessage('Error in cognito auth',error, error.stack); //console.error(error);
+                     SSMActions.displayErrorMessage('Error in cognito auth',error, error.stack); 
                 } else {
                      successCallback(aws_config.credentials, cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion);
                 }
@@ -275,7 +359,7 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
         },
 
         onFailure: function(err) {
-            SSMActions.displayErrorMessage('Error in cognito auth',err, err.stack); // console.log(err);
+            SSMActions.displayErrorMessage('Error in cognito auth',err, err.stack); 
         },
 
     });
@@ -295,7 +379,7 @@ export function stsGetSessionToken(authDetails, region, successCallback){
      };
     
     sts.getSessionToken(params, function(err, data) {
-       if (err) SSMActions.displayErrorMessage('Error in MFA auth',err, err.stack); //console.log(err, err.stack); // an error occurred
+       if (err) SSMActions.displayErrorMessage('Error in MFA auth',err, err.stack); 
        else     successCallback(data);          // successful response
      });
 }

@@ -7,6 +7,12 @@ export function loadInstances(region) {
     });
 }
 
+export function refreshInstances(){
+    dispatcher.dispatch({
+        type: "REFRESH_INSTANCES"
+    });
+}
+
 export function loadRegions() {
     dispatcher.dispatch({
         type: "LOAD_REGIONS",
