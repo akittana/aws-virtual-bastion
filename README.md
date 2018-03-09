@@ -41,13 +41,13 @@ Two authentication options are supported:
 
 - User Requirements
 The IAM user or the Cognito Federated Identity role requires an IAM policy which allows the following actions:
-                ec2:DescribeRegions
-                ec2:DescribeInstances
-                ssm:SendCommand
-                ssm:DescribeInstanceInformation
-                ssm:ListInstanceAssociations
-                ssm:DescribeInstanceAssociationsStatus
-                ssm:GetCommandInvocation
+				ec2:DescribeRegions
+				ec2:DescribeInstances
+				ssm:SendCommand
+				ssm:DescribeInstanceInformation
+				ssm:ListInstanceAssociations
+				ssm:DescribeInstanceAssociationsStatus
+				ssm:GetCommandInvocation
 
 
 More details can be found at: 
@@ -57,6 +57,6 @@ https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-acc
 Download index.html and client.min.js, both located under /src. It can be run locally or hosted on a webserver (or S3 bucket).
 
 # Compiling from source
-If changes are made to the source code, then 'npn run prod_build' will recompile from source. 
+If changes are made to the source code, then 'npm run prod_build' will recompile from source. 
 
 

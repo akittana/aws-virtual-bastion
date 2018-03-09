@@ -36,24 +36,29 @@ export function listInstances(authDetails, region,callback){
     
     var parseReturnedInstances = function(returnedInstances){
         let instances = [];
-        returnedInstances.map((instance) => {
-          // extract Name tag from list of tags
-          let instanceName = "";
-          instance.Instances[0].Tags.map((tag) => {
-              if (tag['Key'] == 'Name') instanceName = tag['Value'];
-          });
-          
-          instances.push({
-              instanceId: instance.Instances[0].InstanceId,
-              instanceTags: instance.Instances[0].Tags,
-              instanceDetails: {
-                  Name: instanceName,
-                  imageId: instance.Instances[0].ImageId,
-                  instanceType: instance.Instances[0].InstanceType,
-                  privateIpAddress: instance.Instances[0].PrivateIpAddress,
-              }
+        returnedInstances.map((instanceList) => {
+            
+          instanceList.Instances.map((instance) =>{
+              let instanceName = "";
+              instance.Tags.map((tag) => {
+                  if (tag['Key'] == 'Name') instanceName = tag['Value'];
+              });
+              
+              instances.push({
+                  instanceId: instance.InstanceId,
+                  instanceTags: instance.Tags,
+                  instanceDetails: {
+                      Name: instanceName,
+                      imageId: instance.ImageId,
+                      instanceType: instance.InstanceType,
+                      privateIpAddress: instance.PrivateIpAddress,
+                  }
+                  
+              }); 
               
           });
+          
+          
         });
         return instances;
     };
@@ -74,6 +79,7 @@ export function listInstances(authDetails, region,callback){
                         instancesList.push(instance);
                     });
                     callback(instancesList);
+                   
                 }
                 
             }
@@ -89,14 +95,23 @@ export function listInstances(authDetails, region,callback){
     ec2.describeInstances(params).promise()
     .then(
         function(data){
-          if (data.NextToken == null){
-            callback(parseReturnedInstances(data.Reservations));
-          }
-          else{
-            
+          if (data.NextToken){
             let instancesList = parseReturnedInstances(data.Reservations);
-            getNextResults(data.NextToken,instancesList);
+            getNextResults(data.NextToken,instancesList);  
           }
+          else
+          {
+            callback(parseReturnedInstances(data.Reservations));  
+          }
+          
+        //   if (data.NextToken == null){
+        //     callback(parseReturnedInstances(data.Reservations));
+        //   }
+        //   else{
+            
+        //     let instancesList = parseReturnedInstances(data.Reservations);
+        //     getNextResults(data.NextToken,instancesList);
+        //   }
       }     
     )
     .catch(
@@ -272,19 +287,34 @@ export function ssmDescribeInstanceInformation(authDetails, region, successCallb
         ssm.describeInstanceInformation(params).promise()
         .then(
             function(data){
-                if (data.NextToken == null){
+                
+                if (data.NextToken){
                     data.InstanceInformationList.map((instance) => {
                         instanceInformationList.push(instance);
                     });
-                    successCallback(instanceInformationList);
+                    getNextResults(data.NextToken,instanceInformationList); 
                 }
-                else
+                else 
                 {
-                    data.InstanceInformationList.map((instance) => {
+                   data.InstanceInformationList.map((instance) => {
                         instanceInformationList.push(instance);
                     });
-                    getNextResults(data.NextToken,instanceInformationList);
+                    successCallback(instanceInformationList); 
                 }
+                
+                // if (data.NextToken == null){
+                //     data.InstanceInformationList.map((instance) => {
+                //         instanceInformationList.push(instance);
+                //     });
+                //     successCallback(instanceInformationList);
+                // }
+                // else
+                // {
+                //     data.InstanceInformationList.map((instance) => {
+                //         instanceInformationList.push(instance);
+                //     });
+                //     getNextResults(data.NextToken,instanceInformationList);
+                // }
             }
         )
         .catch(function(err){
@@ -296,16 +326,29 @@ export function ssmDescribeInstanceInformation(authDetails, region, successCallb
     ssm.describeInstanceInformation(params).promise()
     .then(
         function(data){
-            if (data.NextToken == null){
-                successCallback(data.InstanceInformationList);
-            }
-            else{
+            
+            if (data.NextToken){
                 let instanceInformationList = data.InstanceInformationList;
                 data.InstanceInformationList.map((instance) => {
                         instanceInformationList.push(instance);
                     });
                 getNextResults(data.NextToken,instanceInformationList);
             }
+            else
+            {
+                successCallback(data.InstanceInformationList);
+            }
+            
+            // if (data.NextToken == null){
+            //     successCallback(data.InstanceInformationList);
+            // }
+            // else{
+            //     let instanceInformationList = data.InstanceInformationList;
+            //     data.InstanceInformationList.map((instance) => {
+            //             instanceInformationList.push(instance);
+            //         });
+            //     getNextResults(data.NextToken,instanceInformationList);
+            // }
         }
     )
     .catch(function(err){
@@ -318,14 +361,14 @@ export function ssmDescribeInstanceInformation(authDetails, region, successCallb
 export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId, cognitoIdentityPoolId , cognitoAppClientId, cognitoRegion, successCallback){
     
     var authenticationData = {
-        Username : cognitoUsername, 
-        Password : cognitoPassword 
+        Username : cognitoUsername, //'user1',
+        Password : cognitoPassword //'P@55word2',
     };
     var authenticationDetails = new AuthenticationDetails(authenticationData);
     
     var poolData = {
-        UserPoolId : cognitoUserPoolId, // Your user pool id here
-        ClientId : cognitoAppClientId // Your client id here
+        UserPoolId : cognitoUserPoolId, //'us-east-1_7E9fI4QPV', // Your user pool id here
+        ClientId : cognitoAppClientId //'2ismdvu6g5ee0e4lgf9np00u23' // Your client id here
     };
     var userPool = new CognitoUserPool(poolData);
     
@@ -342,7 +385,7 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
             var loginsKey = {};
             loginsKey[cognitoEndpoint] = result.getIdToken().getJwtToken();
             aws_config.credentials = new CognitoIdentityCredentials({
-                IdentityPoolId : cognitoIdentityPoolId, // your identity pool id here
+                IdentityPoolId : cognitoIdentityPoolId, //'us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d', // your identity pool id here
                 Logins : loginsKey
             },{region:cognitoRegion});
             

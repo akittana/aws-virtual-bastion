@@ -56,7 +56,6 @@ export default class Instances extends React.Component {
      this.setState({refreshInstancesLoading:true}); 
     });
     
-    // this.loadRegions();
   }
   
   

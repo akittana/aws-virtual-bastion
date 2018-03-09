@@ -26,10 +26,10 @@ class SSMStore extends EventEmitter {
             credentialsObject: null,
             cognitoUsername: "", 
             cognitoPassword:"", 
-            cognitoUserPoolId: "", 
-            cognitoIdentityPoolId:"", 
-            cognitoAppClientId:"", 
-            cognitoRegion:"", 
+            cognitoUserPoolId: "", //"us-east-1_7E9fI4QPV", 
+            cognitoIdentityPoolId:"", //"us-east-1:630c00ae-62c6-4012-b406-7ccbd5f96b4d", 
+            cognitoAppClientId:"", //"2ismdvu6g5ee0e4lgf9np00u23", 
+            cognitoRegion:"", //"us-east-1"
         };
         this.isAuthenticated = false;
         this.settings = {
@@ -54,8 +54,9 @@ class SSMStore extends EventEmitter {
             
             case "SET_AUTHENTICATION_DETAILS": {
                 this.authDetails['mode'] = action.mode;
-                if (this.authDetails['mode'] == 'iamUser')
+                if (this.authDetails['mode'] == 'iamUser' || this.authDetails['mode'] == 'credFile')
                 {
+                    this.authDetails['mode'] = 'iamUser'; // this is to override the settings if it was set to credFile
                     this.authDetails['accessKeyId'] = action.authDetails.accessKeyId;
                     this.authDetails['secretAccessKey'] = action.authDetails.secretAccessKey;
                     
@@ -263,6 +264,8 @@ class SSMStore extends EventEmitter {
                     platformType: "",
                 };
             });
+            
+            
             
             awsSSM.ssmDescribeInstanceInformation(this.authDetails, region, 
             (ssmEnabledInstances) => {
