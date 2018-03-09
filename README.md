@@ -41,13 +41,13 @@ Two authentication options are supported:
 
 - User Requirements
 The IAM user or the Cognito Federated Identity role requires an IAM policy which allows the following actions:
-				ec2:DescribeRegions
-				ec2:DescribeInstances
-				ssm:SendCommand
-				ssm:DescribeInstanceInformation
-				ssm:ListInstanceAssociations
-				ssm:DescribeInstanceAssociationsStatus
-				ssm:GetCommandInvocation
+	- ec2:DescribeRegions
+	- ec2:DescribeInstances
+	- ssm:SendCommand
+	- ssm:DescribeInstanceInformation
+	- ssm:ListInstanceAssociations
+	- ssm:DescribeInstanceAssociationsStatus
+	- ssm:GetCommandInvocation
 
 
 More details can be found at: 
