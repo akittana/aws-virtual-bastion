@@ -32,6 +32,7 @@ export default class Authentication extends React.Component {
     let newAuthDetails = this.state.authDetails;
     if (id == "accessKeyIdInput") newAuthDetails['accessKeyId'] = value;
     else if (id == "secretAccessKeyInput") newAuthDetails['secretAccessKey'] = value;
+    else if (id == "sessionTokenInput") newAuthDetails['sessionToken'] = value;
     else if (id == "cognitoUsername") newAuthDetails['cognitoUsername'] = value;
     else if (id == "cognitoPassword") newAuthDetails['cognitoPassword'] = value;
     else if (id == "cognitoUserPoolId") newAuthDetails['cognitoUserPoolId'] = value;
@@ -54,7 +55,6 @@ export default class Authentication extends React.Component {
   }
   
   saveChanges(){
-    console.log(this.state.authOptionSelected, this.state.authDetails);
     SSMActions.setAuthDetails(this.state.authOptionSelected, this.state.authDetails);
     this.close();
   }
@@ -81,6 +81,9 @@ export default class Authentication extends React.Component {
           accessKeyId: profiles[key].aws_access_key_id,
           secretAccessKey: profiles[key].aws_secret_access_key
         };
+        
+        if ('aws_session_token' in profiles[key] )
+          credProfilesAuthInfo[key].sessionToken = profiles[key].aws_session_token
       }
     });
     
@@ -103,8 +106,12 @@ export default class Authentication extends React.Component {
     newAuthDetails['accessKeyId'] = accessKeyId;
     newAuthDetails['secretAccessKey'] = secretAccessKey;
     
+    if ('sessionToken' in this.state.credProfilesAuthInfo[selectedProfile])
+      newAuthDetails['sessionToken'] = this.state.credProfilesAuthInfo[selectedProfile].sessionToken
+    
     this.setState({authDetails: newAuthDetails});
   }
+  
   render() {
     const { open, authOptionSelected, credProfiles, credProfilesError } = this.state;
     
@@ -157,6 +164,8 @@ export default class Authentication extends React.Component {
              <Grid.Row><Input id="accessKeyIdInput" type='text' placeholder='Access Key' style={{'width':'40%'}} disabled={authOptionSelected !== "iamUser" && authOptionSelected !== "iamUserMfa"} onChange={this.handleTextChange} /></Grid.Row> 
              &nbsp;
              <Grid.Row><Input id="secretAccessKeyInput" type='password' placeholder='Secret Access Key' style={{'width':'60%'}} disabled={authOptionSelected !== "iamUser" && authOptionSelected !== "iamUserMfa"} onChange={this.handleTextChange} /></Grid.Row>
+             &nbsp;
+             <Grid.Row><Input id="sessionTokenInput" type='text' placeholder='Session Token (Optional)' style={{'width':'60%'}} disabled={authOptionSelected !== "iamUser" && authOptionSelected !== "iamUserMfa"} onChange={this.handleTextChange} /></Grid.Row>
              &nbsp;
              <Grid.Row>
              <Checkbox label="Multi-Factor Authentication (MFA)" id='enableMfa' disabled={authOptionSelected !== "iamUser" && authOptionSelected !== "iamUserMfa"} checked={this.state.authDetails.mfaEnabled} onClick={this.handleMfaChange}/>

@@ -59,6 +59,8 @@ class SSMStore extends EventEmitter {
                     this.authDetails['mode'] = 'iamUser'; // this is to override the settings if it was set to credFile
                     this.authDetails['accessKeyId'] = action.authDetails.accessKeyId;
                     this.authDetails['secretAccessKey'] = action.authDetails.secretAccessKey;
+                    if ('sessionToken' in action.authDetails && action.authDetails.sessionToken != "")
+                        this.authDetails['sessionToken'] = action.authDetails.sessionToken
                     
                     this.isAuthenticated = true;
                     this.loadRegions();

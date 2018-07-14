@@ -13,11 +13,15 @@ export function listInstances(authDetails, region,callback){
 
     let ec2 = null;
     if (authDetails.mode == 'iamUser') {
-         ec2 = new EC2({
+         let ec2Options = {
             accessKeyId: authDetails.accessKeyId,
             secretAccessKey: authDetails.secretAccessKey,
             region
-        });
+         }
+         if ('sessionToken' in authDetails)
+            ec2Options['sessionToken'] = authDetails.sessionToken
+        
+         ec2 = new EC2(ec2Options);
     }
     else if (authDetails.mode == 'cognito') {
          ec2 = new EC2({
@@ -129,11 +133,15 @@ export function listRegions(authDetails, callback){
 
     let ec2 = null;
     if (authDetails.mode == 'iamUser') {
-         ec2 = new EC2({
+        let ec2Options = {
             accessKeyId: authDetails.accessKeyId,
             secretAccessKey: authDetails.secretAccessKey,
             region: 'us-east-1'
-        });
+         }
+         if ('sessionToken' in authDetails)
+            ec2Options['sessionToken'] = authDetails.sessionToken
+         
+         ec2 = new EC2(ec2Options);
     }
     else if (authDetails.mode == 'cognito') {
          ec2 = new EC2({
@@ -170,11 +178,15 @@ export function ssmSendCommand(authDetails, command,workingDirectory,instanceId,
     // var instanceIds = [];
     let ssm = null;
     if (authDetails.mode == 'iamUser') {
-         ssm = new SSM({
+        let ssmOptions = {
             accessKeyId: authDetails.accessKeyId,
             secretAccessKey: authDetails.secretAccessKey,
             region
-        });
+         }
+         if ('sessionToken' in authDetails)
+            ssmOptions['sessionToken'] = authDetails.sessionToken
+            
+         ssm = new SSM(ssmOptions);
     }
     else if (authDetails.mode == 'cognito') {
          ssm = new SSM({
@@ -223,11 +235,14 @@ export function ssmGetCommandInvocation(authDetails, commandId, instanceIds,regi
    
     let ssm = null;
     if (authDetails.mode == 'iamUser') {
-         ssm = new SSM({
+        let ssmOptions = {
             accessKeyId: authDetails.accessKeyId,
             secretAccessKey: authDetails.secretAccessKey,
             region
-        });
+         }
+         if ('sessionToken' in authDetails)
+            ssmOptions['sessionToken'] = authDetails.sessionToken
+         ssm = new SSM(ssmOptions);
     }
     else if (authDetails.mode == 'cognito') {
          ssm = new SSM({
@@ -261,11 +276,15 @@ export function ssmGetCommandInvocation(authDetails, commandId, instanceIds,regi
 export function ssmDescribeInstanceInformation(authDetails, region, successCallback){
    let ssm = null;
     if (authDetails.mode == 'iamUser') {
-         ssm = new SSM({
+        let ssmOptions = {
             accessKeyId: authDetails.accessKeyId,
             secretAccessKey: authDetails.secretAccessKey,
             region
-        });
+         }
+         if ('sessionToken' in authDetails)
+            ssmOptions['sessionToken'] = authDetails.sessionToken
+            
+         ssm = new SSM(ssmOptions);
     }
     else if (authDetails.mode == 'cognito') {
          ssm = new SSM({
@@ -410,11 +429,15 @@ export function cognitoAuth(cognitoUsername, cognitoPassword, cognitoUserPoolId,
 }
 
 export function stsGetSessionToken(authDetails, region, successCallback){
-    let sts = new STS({
-        accessKeyId: authDetails.accessKeyId,
-        secretAccessKey: authDetails.secretAccessKey,
-        region
-    });
+    let stsOptions = {
+            accessKeyId: authDetails.accessKeyId,
+            secretAccessKey: authDetails.secretAccessKey,
+            region
+         }
+     if ('sessionToken' in authDetails)
+        stsOptions['sessionToken'] = authDetails.sessionToken
+    
+    let sts = new STS(stsOptions);
     
     var params = {
       SerialNumber: authDetails.mfaSerial, 
