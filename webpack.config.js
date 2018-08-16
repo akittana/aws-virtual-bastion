@@ -15,7 +15,7 @@ var config = {
       { 
         test: /\.(js)$/, 
         loader: 'babel-loader', 
-        exclude: /(node_modules\/aws-sdk|node_modules\/amazon-cognito-identity-js)/,
+        exclude: /(node_modules/aws-sdk|node_modules/amazon-cognito-identity-js|node_modules/crypto-browserify)/,
         query: {
           presets: ['react', 'es2015', 'stage-0'],
           plugins: ['react-html-attrs', 'transform-class-properties', 'transform-decorators-legacy']
