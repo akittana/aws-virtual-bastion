@@ -1,3 +1,5 @@
+**AWS release of Session Manager makes this application mostly obselete. I would encourage you to check out [AWS Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) instead.
+
 # Overview
 A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands (bash or powershell).
 
