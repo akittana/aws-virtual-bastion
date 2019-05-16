@@ -3,9 +3,6 @@
 # Overview
 A web based terminal for EC2 instances that does not require SSH or any other inbound connections to the instaces. Instead it uses the AWS Systems Manager (SSM) API to run commands (bash or powershell).
 
-[Try it here](https://awsvirtualbastion.asecure.cloud)
-
-
 **Run commands on multiple instances at once:**
 
 ![Run commands on multiple instances](/screenshots/multi-select.png) 
